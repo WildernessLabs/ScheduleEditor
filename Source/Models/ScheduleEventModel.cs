@@ -167,7 +167,6 @@ public class ScheduleEventModel : INotifyPropertyChanged
         {
             if (_selectedEventType != value)
             {
-                Console.WriteLine($"EventType changed from {_selectedEventType} to {value}");
                 _selectedEventType = value;
                 // Note: Changing event type would require recreating the event object
                 // For now, we'll just track the change but not implement the conversion
@@ -217,7 +216,6 @@ public class ScheduleEventModel : INotifyPropertyChanged
         };
         set
         {
-            Console.WriteLine($"ActionText setter called with value: {value}");
             var newData = value switch
             {
                 "Turn On" => "true",
@@ -226,7 +224,6 @@ public class ScheduleEventModel : INotifyPropertyChanged
             };
             if (Data != newData)
             {
-                Console.WriteLine($"ActionText changing Data from {Data} to {newData}");
                 Data = newData; // This will trigger IsDirty = true
             }
         }
@@ -253,7 +250,6 @@ public class ScheduleEventModel : INotifyPropertyChanged
         }
         set
         {
-            Console.WriteLine($"OffsetMinutes setter called with value: {value}");
             _offsetMinutes = value;
             IsDirty = true;
             OnPropertyChanged(nameof(OffsetMinutes));
@@ -280,7 +276,6 @@ public class ScheduleEventModel : INotifyPropertyChanged
         }
         set
         {
-            Console.WriteLine($"IsOffsetBefore setter called with value: {value}");
             _isOffsetBefore = value;
             IsDirty = true;
             OnPropertyChanged(nameof(IsOffsetBefore));
@@ -336,7 +331,6 @@ public class ScheduleEventModel : INotifyPropertyChanged
         {
             if (value.HasValue)
             {
-                Console.WriteLine($"EventTime setter called with value: {value.Value}");
                 _eventTime = value.Value;
                 IsDirty = true;
                 OnPropertyChanged(nameof(EventTime));
@@ -490,7 +484,6 @@ public class ScheduleEventModel : INotifyPropertyChanged
 
     private void SetDaySelected(DayOfWeek day, bool selected)
     {
-        Console.WriteLine($"SetDaySelected: {day} = {selected} for {_scheduleEvent.EventType}");
 
         // Initialize the dictionary if needed
         if (_daySelections == null)

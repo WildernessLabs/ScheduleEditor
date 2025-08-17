@@ -262,7 +262,7 @@
 
         <!-- Status Bar -->
         <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="0,1,0,0" Padding="5">
-            <TextBlock Text="Ready" FontSize="12" Foreground="Gray"/>
+            <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
         </Border>
     </Grid>
 </Window>

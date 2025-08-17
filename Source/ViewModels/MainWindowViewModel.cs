@@ -26,6 +26,7 @@ public class MainWindowViewModel : ViewModelBase
     private bool _isFileModified;
     private bool _hasUnsavedChanges;
     private string? _selectedSerialPort;
+    private string _statusMessage = "Ready";
     private readonly MeadowConnectionManager? _connectionManager;
 
     public event Action<List<SerialPortModel>, string?>? SerialPortsUpdated;
@@ -41,7 +42,7 @@ public class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Warning: Could not initialize Meadow connection manager: {ex.Message}");
+            StatusMessage = $"Warning: Could not initialize Meadow connection manager: {ex.Message}";
         }
 
         // Commands
@@ -135,6 +136,12 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _selectedSerialPort, value);
     }
 
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
+    }
+
     // Commands
     public ICommand NewFileCommand { get; }
     public ICommand OpenFileCommand { get; }
@@ -160,6 +167,7 @@ public class MainWindowViewModel : ViewModelBase
 
         ScheduleCollection = new ScheduleCollectionModel();
         IsFileModified = false;
+        StatusMessage = "New file created";
         this.RaisePropertyChanged(nameof(WindowTitle));
     }
 
@@ -192,12 +200,13 @@ public class MainWindowViewModel : ViewModelBase
                     FileName = filePath
                 };
                 IsFileModified = false;
+                StatusMessage = $"File opened: {Path.GetFileName(filePath)}";
                 this.RaisePropertyChanged(nameof(WindowTitle));
             }
             catch (Exception ex)
             {
                 // TODO: Show error dialog
-                Console.WriteLine($"Error opening file: {ex.Message}");
+                StatusMessage = $"Error opening file: {ex.Message}";
             }
         }
     }
@@ -221,13 +230,14 @@ public class MainWindowViewModel : ViewModelBase
                 await File.WriteAllTextAsync(ScheduleCollection.FileName, json);
                 IsFileModified = false;
                 HasUnsavedChanges = false;
+                StatusMessage = "File saved";
                 this.RaisePropertyChanged(nameof(WindowTitle));
             }
         }
         catch (Exception ex)
         {
             // TODO: Show error dialog
-            Console.WriteLine($"Error saving file: {ex.Message}");
+            StatusMessage = $"Error saving file: {ex.Message}";
         }
     }
 
@@ -264,13 +274,14 @@ public class MainWindowViewModel : ViewModelBase
                     ScheduleCollection.FileName = filePath;
                     IsFileModified = false;
                     HasUnsavedChanges = false;
+                    StatusMessage = $"File saved as: {Path.GetFileName(filePath)}";
                     this.RaisePropertyChanged(nameof(WindowTitle));
                 }
             }
             catch (Exception ex)
             {
                 // TODO: Show error dialog
-                Console.WriteLine($"Error saving file: {ex.Message}");
+                StatusMessage = $"Error saving file: {ex.Message}";
             }
         }
     }
@@ -327,7 +338,7 @@ public class MainWindowViewModel : ViewModelBase
         if (SelectedEvent == null) return;
 
         // TODO: Show event edit dialog
-        Console.WriteLine($"Edit event: {SelectedEvent.EventType}");
+        StatusMessage = $"Edit event: {SelectedEvent.EventType}";
     }
 
     private async Task SaveChanges()
@@ -381,7 +392,7 @@ public class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error refreshing serial ports: {ex.Message}");
+            StatusMessage = $"Error refreshing serial ports: {ex.Message}";
 
             // Notify the UI with empty list on error
             SerialPortsUpdated?.Invoke(new List<SerialPortModel>(), SelectedSerialPort);
@@ -421,15 +432,15 @@ public class MainWindowViewModel : ViewModelBase
             if (IsFileModified)
             {
                 // TODO: Show confirmation dialog
-                Console.WriteLine("Warning: Unsaved changes will be lost");
+                StatusMessage = "Warning: Unsaved changes will be lost";
             }
 
-            Console.WriteLine($"Loading {DefaultFileName} from device on {SelectedSerialPort}...");
+            StatusMessage = $"Loading {DefaultFileName} from device on {SelectedSerialPort}...";
 
             var connection = _connectionManager.GetConnectionForRoute(SelectedSerialPort);
             if (connection == null)
             {
-                Console.WriteLine("Unable to create connection to device");
+                StatusMessage = "Unable to create connection to device";
                 return;
             }
 
@@ -437,7 +448,7 @@ public class MainWindowViewModel : ViewModelBase
             var device = await connection.Attach();
             if (device == null)
             {
-                Console.WriteLine("Unable to attach to device");
+                StatusMessage = "Unable to attach to device";
                 return;
             }
 
@@ -446,7 +457,7 @@ public class MainWindowViewModel : ViewModelBase
 
             if (string.IsNullOrEmpty(jsonContent))
             {
-                Console.WriteLine($"No {DefaultFileName} file found on device or file is empty");
+                StatusMessage = $"No {DefaultFileName} file found on device or file is empty";
                 return;
             }
 
@@ -461,11 +472,11 @@ public class MainWindowViewModel : ViewModelBase
             IsFileModified = false;
             this.RaisePropertyChanged(nameof(WindowTitle));
 
-            Console.WriteLine("Schedule loaded successfully from device");
+            StatusMessage = "Schedule loaded successfully from device";
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading from device: {ex.Message}");
+            StatusMessage = $"Error loading from device: {ex.Message}";
         }
     }
 
@@ -478,7 +489,7 @@ public class MainWindowViewModel : ViewModelBase
 
         try
         {
-            Console.WriteLine($"Saving {DefaultFileName} to device on {SelectedSerialPort}...");
+            StatusMessage = $"Saving {DefaultFileName} to device on {SelectedSerialPort}...";
 
             // Apply any pending changes before saving
             ApplyAllPendingChanges();
@@ -486,7 +497,7 @@ public class MainWindowViewModel : ViewModelBase
             var connection = _connectionManager.GetConnectionForRoute(SelectedSerialPort);
             if (connection == null)
             {
-                Console.WriteLine("Unable to create connection to device");
+                StatusMessage = "Unable to create connection to device";
                 return;
             }
 
@@ -494,7 +505,7 @@ public class MainWindowViewModel : ViewModelBase
             var device = await connection.Attach();
             if (device == null)
             {
-                Console.WriteLine("Unable to attach to device");
+                StatusMessage = "Unable to attach to device";
                 return;
             }
 
@@ -502,7 +513,7 @@ public class MainWindowViewModel : ViewModelBase
             var json = ScheduleSerializer.SerializeScheduleCollection(ScheduleCollection.ScheduleCollection);
             if (json == null)
             {
-                Console.WriteLine("Failed to serialize schedule");
+                StatusMessage = "Failed to serialize schedule";
                 return;
             }
 
@@ -522,16 +533,16 @@ public class MainWindowViewModel : ViewModelBase
 
                 if (result)
                 {
-                    Console.WriteLine("Schedule saved successfully to device");
+                    StatusMessage = "Schedule saved successfully to device";
                 }
                 else
                 {
-                    Console.WriteLine("Failed to save schedule to device");
+                    StatusMessage = "Failed to save schedule to device";
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to save schedule to device: {ex.Message}");
+                StatusMessage = $"Failed to save schedule to device: {ex.Message}";
             }
             finally
             {
@@ -546,7 +557,7 @@ public class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving to device: {ex.Message}");
+            StatusMessage = $"Error saving to device: {ex.Message}";
         }
     }
 
