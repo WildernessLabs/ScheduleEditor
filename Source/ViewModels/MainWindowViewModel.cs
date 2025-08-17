@@ -411,7 +411,9 @@ public class MainWindowViewModel : ViewModelBase
     private async Task LoadFromDevice()
     {
         if (string.IsNullOrEmpty(SelectedSerialPort) || _connectionManager == null)
+        {
             return;
+        }
 
         try
         {
@@ -470,7 +472,9 @@ public class MainWindowViewModel : ViewModelBase
     private async Task SaveToDevice()
     {
         if (string.IsNullOrEmpty(SelectedSerialPort) || _connectionManager == null)
+        {
             return;
+        }
 
         try
         {
@@ -502,6 +506,11 @@ public class MainWindowViewModel : ViewModelBase
                 return;
             }
 
+            if (await connection.IsRuntimeEnabled())
+            {
+                await connection.RuntimeDisable();
+            }
+
             // Save the JSON to a temporary local file first
             var tempPath = Path.GetTempFileName();
             await File.WriteAllTextAsync(tempPath, json);
@@ -520,6 +529,10 @@ public class MainWindowViewModel : ViewModelBase
                     Console.WriteLine("Failed to save schedule to device");
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to save schedule to device: {ex.Message}");
+            }
             finally
             {
                 // Clean up the temporary file
@@ -527,6 +540,8 @@ public class MainWindowViewModel : ViewModelBase
                 {
                     File.Delete(tempPath);
                 }
+
+                await connection.RuntimeEnable();
             }
         }
         catch (Exception ex)

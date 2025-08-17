@@ -24,16 +24,16 @@ public partial class MainWindow : Window
         var deviceMenu = DeviceMenu;
         if (deviceMenu == null) return;
         
-        // Remove existing port items (keep the first 4: Refresh, Separator, Header, Loading/NoPortsFound)
-        while (deviceMenu.Items.Count > 4)
+        // Remove existing port items (keep the first 6: Refresh, Separator, Load, Save, Separator, Header)
+        while (deviceMenu.Items.Count > 6)
         {
-            deviceMenu.Items.RemoveAt(4);
+            deviceMenu.Items.RemoveAt(6);
         }
         
-        // Remove the "Loading..." item
-        if (deviceMenu.Items.Count == 4)
+        // Remove the "Loading..." item if it exists
+        if (deviceMenu.Items.Count == 7)
         {
-            deviceMenu.Items.RemoveAt(3);
+            deviceMenu.Items.RemoveAt(6);
         }
         
         if (serialPorts.Count == 0)

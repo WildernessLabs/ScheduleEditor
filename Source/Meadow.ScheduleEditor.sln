@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Tooling.Core", "..\.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Foundation.MicroScheduler", "..\..\Meadow.Foundation\Source\Meadow.Foundation.Libraries_and_Frameworks\MicroScheduler\Driver\Meadow.Foundation.MicroScheduler\Meadow.Foundation.MicroScheduler.csproj", "{8161DA81-9FE5-111E-3D5C-C649D0007B21}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.SoftwareManager", "..\..\Meadow.CLI\Source\Meadow.SoftwareManager\Meadow.SoftwareManager.csproj", "{4BC6CE7E-3EC6-DB62-05D3-A35CC664BDFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{8161DA81-9FE5-111E-3D5C-C649D0007B21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8161DA81-9FE5-111E-3D5C-C649D0007B21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8161DA81-9FE5-111E-3D5C-C649D0007B21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BC6CE7E-3EC6-DB62-05D3-A35CC664BDFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BC6CE7E-3EC6-DB62-05D3-A35CC664BDFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BC6CE7E-3EC6-DB62-05D3-A35CC664BDFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BC6CE7E-3EC6-DB62-05D3-A35CC664BDFE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,6 +49,7 @@ Global
 		{78E452A0-A77F-CD98-4F1C-793F33B0AF6E} = {BD723044-0856-D0CD-08C8-5B40B1E1D1C1}
 		{A18C53DF-F43F-986C-0B66-77FDB9B96A6D} = {BD723044-0856-D0CD-08C8-5B40B1E1D1C1}
 		{8161DA81-9FE5-111E-3D5C-C649D0007B21} = {BD723044-0856-D0CD-08C8-5B40B1E1D1C1}
+		{4BC6CE7E-3EC6-DB62-05D3-A35CC664BDFE} = {BD723044-0856-D0CD-08C8-5B40B1E1D1C1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C84F66A0-E0CA-471A-9CEE-A74EF71C121C}
