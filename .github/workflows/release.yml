@@ -1,0 +1,208 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        default: '1.0.3'
+      ready_to_run:
+        description: 'Enable Ready-to-Run compilation'
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            name: Windows x64
+          - os: macos-latest
+            rid: osx-x64
+            name: macOS x64
+          - os: macos-latest
+            rid: osx-arm64
+            name: macOS ARM64
+          - os: ubuntu-latest
+            rid: linux-x64
+            name: Linux x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install Velopack CLI
+      run: dotnet tool install -g vpk
+
+    - name: Restore dependencies
+      run: dotnet restore Source/ScheduleEditor.csproj
+
+    - name: Get version
+      id: version
+      shell: pwsh
+      run: |
+        if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          $version = "${{ github.ref_name }}".TrimStart('v')
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "Version: $version"
+
+    - name: Update version in project file
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.VERSION }}"
+        $projectFile = "Source/ScheduleEditor.csproj"
+        $content = Get-Content $projectFile -Raw
+        $content = $content -replace '<Version>.*</Version>', "<Version>$version</Version>"
+        Set-Content $projectFile $content
+
+        $velopackFile = "Source/velopack.json"
+        $veloContent = Get-Content $velopackFile -Raw
+        $veloContent = $veloContent -replace '"version": ".*"', "`"version`": `"$version`""
+        Set-Content $velopackFile $veloContent
+
+    - name: Publish application
+      shell: pwsh
+      run: |
+        $publishArgs = @(
+          "publish"
+          "Source/ScheduleEditor.csproj"
+          "-c", "Release"
+          "-r", "${{ matrix.rid }}"
+          "--self-contained", "true"
+          "-p:PublishSingleFile=true"
+          "-p:PublishTrimmed=false"
+          "-o", "publish/${{ matrix.rid }}"
+        )
+
+        if ("${{ github.event.inputs.ready_to_run }}" -eq "true") {
+          Write-Host "Enabling Ready-to-Run compilation for ${{ matrix.rid }}"
+          $publishArgs += "-p:PublishReadyToRun=true"
+        }
+
+        & dotnet @publishArgs
+
+    - name: Create Velopack package
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.VERSION }}"
+        $publishDir = "publish/${{ matrix.rid }}"
+        $releaseDir = "releases/${{ matrix.rid }}"
+
+        New-Item -ItemType Directory -Force -Path $releaseDir
+
+        vpk pack --packId ScheduleEditor --packVersion $version --packDir $publishDir --outputDir $releaseDir --framework net8 --runtime ${{ matrix.rid }}
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScheduleEditor-${{ matrix.rid }}
+        path: releases/${{ matrix.rid }}/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Get version
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Create release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Schedule Editor v${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Schedule Editor v${{ steps.version.outputs.VERSION }}
+
+          Cross-platform desktop application for configuring Meadow schedules.
+
+          ### Downloads
+          - **Windows**: Download the `.exe` installer for Windows x64
+          - **macOS**: Download the `.dmg` installer (supports both Intel and Apple Silicon)
+          - **Linux**: Download the `.AppImage` for Linux x64
+
+          ### Installation
+          1. Download the appropriate installer for your platform
+          2. Run the installer and follow the prompts
+          3. The application will automatically update when new versions are available
+
+          ### Changes
+          See commit history for detailed changes in this release.
+        files: |
+          artifacts/**/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  manual-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Create manual release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        name: Schedule Editor v${{ github.event.inputs.version }}
+        body: |
+          ## Schedule Editor v${{ github.event.inputs.version }}
+
+          Cross-platform desktop application for configuring Meadow schedules.
+
+          ### Downloads
+          - **Windows**: Download the `.exe` installer for Windows x64
+          - **macOS**: Download the `.dmg` installer (supports both Intel and Apple Silicon)
+          - **Linux**: Download the `.AppImage` for Linux x64
+
+          ### Installation
+          1. Download the appropriate installer for your platform
+          2. Run the installer and follow the prompts
+          3. The application will automatically update when new versions are available
+
+          ### Changes
+          Manual release - see commit history for detailed changes.
+        files: |
+          artifacts/**/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
